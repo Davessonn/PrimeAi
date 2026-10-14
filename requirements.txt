@@ -1,0 +1,24 @@
+# Async Core & HTTP CLient
+httpx >= 0.27.0
+asyncio >= 3.4.3
+
+# Data validation & settings management
+pydantic >= 2.0.0
+pydantic-settings >= 2.2.0
+
+# Database & Async ORM
+sqlalchemy >= 2.0.28
+asyncpg >= 0.29.0
+greenlet >= 3.0.3
+
+# Discord integration
+discord.py >= 2.3.2
+
+# Task scheduling
+apscheduler >= 3.10.4
+
+# Google Gemini AI SDK
+google-genai >= 0.1.1
+
+# Environment variable loading
+python-dotenv >= 1.0.1

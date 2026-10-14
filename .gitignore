@@ -1,0 +1,43 @@
+# Environment variables & Credentials (KRITIKUS: API kulcsok kiszűrése)
+.env
+.env.local
+.env.*.local
+*.pem
+
+# Python Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Python Byte-compiled / optimized files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# PyCharm & IDE configuration
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Database & SQLite local test databases
+*.sqlite3
+*.db
+
+# Logs & Debugging
+*.log
+logs/
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Operating System specific files
+.DS_Store
+Thumbs.db
+
+# Archives & Temporary zips
+*.zip
+*.tar.gz
