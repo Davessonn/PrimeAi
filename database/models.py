@@ -72,6 +72,7 @@ class WellnessDaily(Base):
 
 class Activity(Base):
     __tablename__ = "activities"
+    __table_args__ = {"schema": "primeAi"}
 
     id: Mapped[str] = mapped_column(String(100), primary_key=True)
     date: Mapped[date] = mapped_column(Date, index=True, nullable=False)
@@ -81,11 +82,15 @@ class Activity(Base):
     duration_seconds: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     tss: Mapped[Optional[float]] = mapped_column(Numeric(6, 2), nullable=True)
     distance_meters: Mapped[Optional[float]] = mapped_column(Numeric(10, 2), nullable=True)
+    elevation_gain_meters: Mapped[Optional[float]] = mapped_column(Numeric(6, 1), nullable=True)
     avg_hr: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     max_hr: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    avg_watts: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    normalized_power: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    calories: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     rpe: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     raw_json: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSONB, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 class AIBriefing(Base):
     __tablename__ = "ai_briefings"

@@ -20,3 +20,15 @@ class IntervalsClient:
             return response.json()
 
 
+    async def get_activities(self, start_date: str, end_date: str) -> List[Dict[str, Any]]:
+        """Fetch activity data for the specified date range."""
+        url = f"{self.base_url}/athlete/{self.athlete_id}/activities"
+        params = {"oldest": f"{start_date}T00:00:00", "newest": f"{end_date}T23:59:59"}
+
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.get(url, auth=self.auth, params=params)
+            response.raise_for_status()
+            activities = response.json()
+            return [a for a in activities if a.get("category") == "WORKOUT" or a.get("type") is not None]
+
+

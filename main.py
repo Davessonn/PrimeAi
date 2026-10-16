@@ -16,13 +16,18 @@ async def main(start_date: date, end_date: date) -> None:
         )
         print(f"Wellness sync complete: {wellness_count} days saved ({start_date} -> {end_date}).")
 
+        activities_count = await sync_activities(
+            start_date, end_date, IntervalsClient(), SessionFactory
+        )
+        print(f"Activities sync complete: {activities_count} activities saved ({start_date} -> {end_date}).")
+
     finally:
         await engine.dispose()
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Fetch Intervals.icu wellness data and save it to PostgreSQL."
+        description="Fetch Intervals.icu wellness and activity data and save it to PostgreSQL."
     )
     parser.add_argument("--end-date", type=date.fromisoformat, default=date.today())
     parser.add_argument("--start-date", type=date.fromisoformat)

@@ -25,4 +25,18 @@ class WellnessDTO(BaseModel):
     ramp_rate: Optional[float] = Field(default=None, description="Ramp rate")
     raw_json: Optional[Dict[str, Any]] = Field(default=None, description="Raw JSON data")
 
+class ActivityDTO(BaseModel):
+    id: str = Field(..., description="Activity record ID")
+    date: str = Field(..., description="Date of the activity")
+    start_time: str = Field(..., description="Start time of the activity")
+    type: str = Field(..., description="Type of the activity")
+    name: Optional[str] = Field(default=None, description="Activity name")
+    duration_seconds: Optional[int] = Field(default=None, description="Duration in seconds")
+    tss: Optional[float] = Field(default=None, description="Training Stress Score (TSS)")
+    distance_meters: Optional[float] = Field(default=None, description="Distance in meters")
+    avg_hr: Optional[int] = Field(default=None, description="Average heart rate in beats per minute")
+    max_hr: Optional[int] = Field(default=None, description="Maximum heart rate in beats per minute")
+    rpe: Optional[int] = Field(default=None, description="Rate of Perceived Exertion (RPE)")
+    raw_json: Optional[Dict[str, Any]] = Field(default=None, description="Raw JSON data")
+
 
