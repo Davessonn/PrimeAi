@@ -5,6 +5,7 @@ from datetime import date, timedelta
 from clients.intervals_client import IntervalsClient
 from database.session import SessionFactory, engine, init_db
 from services.sync_service import sync_wellness
+from services.sync_service import sync_activities
 
 
 async def main(start_date: date, end_date: date) -> None:
@@ -15,9 +16,6 @@ async def main(start_date: date, end_date: date) -> None:
         )
         print(f"Wellness sync complete: {wellness_count} days saved ({start_date} -> {end_date}).")
 
-        activities_count = await sync_wellness(
-            start_date, end_date, IntervalsClient(), SessionFactory
-        )
     finally:
         await engine.dispose()
 
