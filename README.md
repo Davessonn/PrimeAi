@@ -123,9 +123,14 @@ DISCORD_CHANNEL_ID=1234567890123456789
 # Intervals.icu
 INTERVALS_API_KEY=your_intervals_api_key_here
 INTERVALS_ATHLETE_ID=0
+INTERVALS_BASE_URL=https://intervals.icu/api/v1
 
 # Google Gemini
-GEMINI_API_KEY=your_gemini_api_key_here
+GOOGLE_GEMINI_API_KEY=your_gemini_api_key_here
+
+# Runtime
+ENVIRONMENT=development
+LOG_LEVEL=INFO
 ```
 
 ### 3. Local Installation & Launch
@@ -138,9 +143,52 @@ source venv/bin/activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Run main application (Initializes DB tables automatically on first launch)
+# Sync wellness data (initializes DB tables automatically on first launch)
 python3 main.py
 ```
+
+### Wellness data sync
+
+`main.py` currently runs a one-off wellness sync, not the Discord bot or scheduler.
+By default it fetches today and the preceding 30 days (31 calendar dates, inclusive).
+To sync a specific date range:
+
+```powershell
+.\.venv\Scripts\python.exe main.py --start-date 2026-09-16 --end-date 2026-10-16
+```
+
+Set `DATABASE_URL` in `.env` to a PostgreSQL connection URL, using the
+`postgresql+asyncpg://` scheme (`postgresql://` is also accepted). The configured
+database must already exist; the application creates missing tables.
+Percent-encode special characters in the URL's username and password, for example
+`@` as `%40`, `/` as `%2F`, and `#` as `%23`.
+The current `config/settings.py` also requires `INTERVALS_BASE_URL` (normally
+`https://intervals.icu/api/v1`), `GOOGLE_GEMINI_API_KEY`, `ENVIRONMENT`, and
+`LOG_LEVEL`, along with the Intervals and Discord settings.
+
+The sync service fetches Intervals.icu records, then the repository saves them in
+one transaction to `wellness_daily`. Re-running a range updates existing dates
+instead of adding duplicates, including `updated_at`. The original API record is
+retained in `raw_json`; when `tsb` is absent, it is calculated as `ctl - atl` if both
+values are available. Missing metrics are stored as NULL. The date-only primary
+key assumes a single athlete per database.
+
+Wellness queries explicitly target `"primeAi".wellness_daily`, independently of
+the connection's `search_path`. The schema must already exist. The ORM model and
+repository include the extended sleep, recovery, activity, nutrition, and source
+metadata fields, including the case-sensitive custom API keys `DeepSleep`,
+`REMSleep`, `LightSleep`, and `ActiveEnergy`. Continuous metrics use PostgreSQL
+`DOUBLE PRECISION`; API `updated` timestamps are parsed as timezone-aware datetimes.
+Missing optional JSON fields are stored as SQL NULL.
+
+The import does not overwrite `created_at`, `hrv_z_score`, `sleep_debt_hours`, or
+`analytics_calculated_at` on existing rows. Recalculate analytics after a sync
+before using them as current results. Bulk insert sizes account for the number
+of columns to stay below asyncpg's parameter limit.
+
+Existing databases must be migrated to the extended table definition before
+running this version: `create_all()` does not add columns or change existing
+column types. No existing tables or data are automatically dropped or migrated.
 
 ---
 
