@@ -147,9 +147,9 @@ pip install -r requirements.txt
 python3 main.py
 ```
 
-### Wellness data sync
+### Wellness and activity data sync
 
-`main.py` currently runs a one-off wellness sync, not the Discord bot or scheduler.
+`main.py` currently runs one-off wellness and activity syncs, not the Discord bot or scheduler.
 By default it fetches today and the preceding 30 days (31 calendar dates, inclusive).
 To sync a specific date range:
 
@@ -189,6 +189,30 @@ of columns to stay below asyncpg's parameter limit.
 Existing databases must be migrated to the extended table definition before
 running this version: `create_all()` does not add columns or change existing
 column types. No existing tables or data are automatically dropped or migrated.
+
+Activities are saved to `"primeAi".activities` using a separate repository and
+transaction, after the wellness sync. Each activity is upserted by its Intervals
+`id`, so multiple activities on the same date remain separate. `date` is taken
+from `start_date_local`; `start_time` uses the timezone-aware `start_date`.
+`duration_seconds` stores `moving_time` (not elapsed time), `tss` stores Intervals'
+`icu_training_load` (which is not necessarily power-based TSS), and `rpe` stores
+`icu_rpe`. Distance is stored in metres. Other API fields, including zone times,
+calories, and device information, are retained in `raw_json`. The import updates
+existing activity values but preserves their local `created_at` timestamps.
+Walks are included alongside other recorded activity types.
+
+The activity table also stores `total_elevation_gain` as `elevation_gain_meters`,
+`calories`, `icu_average_watts` as `avg_watts`, and `icu_weighted_avg_watts` as
+`normalized_power`. The two power columns use INTEGER, so values are rounded to
+whole watts using Python's `round()` (ties to even); original precision remains in
+`raw_json`. GAP is not power and is not used for `normalized_power`. Elevation uses
+`NUMERIC(6, 1)`, rounded to one decimal place by PostgreSQL. Missing metrics remain
+NULL. Use `database\create_activities.sql` for a new table; an existing table needs
+an explicit migration to add these columns.
+
+The database role needs schema USAGE and SELECT, INSERT, UPDATE on both target
+tables. If activities fail after wellness has committed, the wellness changes
+remain saved; re-running is safe because both syncs use upserts.
 
 ---
 
