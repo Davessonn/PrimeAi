@@ -10,6 +10,7 @@ import httpx
 from clients.intervals_client import IntervalsClient
 from config.settings import settings
 from database.session import SessionFactory, engine, init_db
+from services.daily_baseline_service import calculate_daily_baseline
 from services.sync_service import sync_activities, sync_wellness
 
 
@@ -39,7 +40,7 @@ async def ping(interaction: discord.Interaction):
 
 @bot.tree.command(
     name="sync",
-    description="Save wellness and activity data for today and the preceding 30 days.",
+    description="Save wellness and activity data for the last 30 days and today's baseline.",
 )
 @app_commands.guild_only()
 @app_commands.default_permissions(administrator=True)
@@ -71,6 +72,7 @@ async def sync(interaction: discord.Interaction):
             wellness_count = await sync_wellness(
                 start_date, today, client, SessionFactory
             )
+            await calculate_daily_baseline(today, SessionFactory)
             activities_count = await sync_activities(
                 start_date, today, client, SessionFactory
             )

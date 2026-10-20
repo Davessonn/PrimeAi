@@ -1,6 +1,6 @@
 from datetime import date, datetime
 from typing import Optional, Any, Dict
-from sqlalchemy import String, Integer, Numeric, Text, Date, DateTime, Double, Boolean, func
+from sqlalchemy import String, Integer, Numeric, Text, Date, DateTime, Double, Boolean, ForeignKey, false, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import JSONB
 
@@ -94,6 +94,7 @@ class Activity(Base):
 
 class AIBriefing(Base):
     __tablename__ = "ai_briefings"
+    __table_args__ = {"schema": "primeAi"}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     date: Mapped[date] = mapped_column(Date, unique=True, nullable=False)
@@ -108,9 +109,67 @@ class AIBriefing(Base):
 
 class UserNote(Base):
     __tablename__ = "user_notes"
+    __table_args__ = {"schema": "primeAi"}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     date: Mapped[date] = mapped_column(Date, index=True, nullable=False)
     note_type: Mapped[str] = mapped_column(String(50), default="general", nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+class DailyBaseline(Base):
+    __tablename__ = "daily_baselines"
+    __table_args__ = {"schema": "primeAi"}
+
+    date: Mapped[date] = mapped_column(
+        Date, ForeignKey("primeAi.wellness_daily.date", ondelete="CASCADE"), primary_key=True
+    )
+
+    hrv_14d_avg: Mapped[Optional[float]] = mapped_column(Numeric(6, 2))
+    hrv_30d_avg: Mapped[Optional[float]] = mapped_column(Numeric(6, 2))
+    hrv_30d_std: Mapped[Optional[float]] = mapped_column(Numeric(6, 2))
+    hrv_60d_avg: Mapped[Optional[float]] = mapped_column(Numeric(6, 2))
+    hrv_90d_avg: Mapped[Optional[float]] = mapped_column(Numeric(6, 2))
+    hrv_30d_lower: Mapped[Optional[float]] = mapped_column(Numeric(6, 2))
+    hrv_30d_upper: Mapped[Optional[float]] = mapped_column(Numeric(6, 2))
+    hrv_cv_30d: Mapped[Optional[float]] = mapped_column(Numeric(5, 2))
+
+    rhr_14d_avg: Mapped[Optional[float]] = mapped_column(Numeric(6, 2))
+    rhr_30d_avg: Mapped[Optional[float]] = mapped_column(Numeric(6, 2))
+    rhr_30d_std: Mapped[Optional[float]] = mapped_column(Numeric(6, 2))
+    rhr_60d_avg: Mapped[Optional[float]] = mapped_column(Numeric(6, 2))
+    rhr_90d_avg: Mapped[Optional[float]] = mapped_column(Numeric(6, 2))
+    rhr_30d_lower: Mapped[Optional[float]] = mapped_column(Numeric(6, 2))
+    rhr_30d_upper: Mapped[Optional[float]] = mapped_column(Numeric(6, 2))
+    rhr_cv_30d: Mapped[Optional[float]] = mapped_column(Numeric(5, 2))
+
+    sleep_secs_14d_avg: Mapped[Optional[float]] = mapped_column(Numeric(8, 2))
+    sleep_secs_30d_avg: Mapped[Optional[float]] = mapped_column(Numeric(8, 2))
+    deep_sleep_secs_14d_avg: Mapped[Optional[float]] = mapped_column(Numeric(8, 2))
+    deep_sleep_secs_30d_avg: Mapped[Optional[float]] = mapped_column(Numeric(8, 2))
+    rem_sleep_secs_14d_avg: Mapped[Optional[float]] = mapped_column(Numeric(8, 2))
+    rem_sleep_secs_30d_avg: Mapped[Optional[float]] = mapped_column(Numeric(8, 2))
+    respiration_rate_14d_avg: Mapped[Optional[float]] = mapped_column(Numeric(4, 2))
+    respiration_rate_30d_avg: Mapped[Optional[float]] = mapped_column(Numeric(4, 2))
+    subjective_stress_7d_avg: Mapped[Optional[float]] = mapped_column(Numeric(4, 2))
+
+    ctl: Mapped[Optional[float]] = mapped_column(Numeric(6, 2))
+    atl: Mapped[Optional[float]] = mapped_column(Numeric(6, 2))
+    tsb: Mapped[Optional[float]] = mapped_column(Numeric(6, 2))
+    load_acwr: Mapped[Optional[float]] = mapped_column(Numeric(4, 2))
+    ctl_ramp_rate: Mapped[Optional[float]] = mapped_column(Numeric(5, 2))
+
+    hrv_acwr: Mapped[Optional[float]] = mapped_column(Numeric(6, 4))
+    hrv_zscore_30d: Mapped[Optional[float]] = mapped_column(Numeric(6, 2))
+    hrv_zscore_90d: Mapped[Optional[float]] = mapped_column(Numeric(6, 2))
+    rhr_zscore_30d: Mapped[Optional[float]] = mapped_column(Numeric(6, 2))
+    rhr_zscore_90d: Mapped[Optional[float]] = mapped_column(Numeric(6, 2))
+    respiration_zscore_30d: Mapped[Optional[float]] = mapped_column(Numeric(6, 2))
+    composite_stress_score: Mapped[Optional[float]] = mapped_column(Numeric(6, 2))
+
+    is_hrv_suppressed: Mapped[bool] = mapped_column(Boolean, server_default=false(), nullable=False)
+    is_rhr_elevated: Mapped[bool] = mapped_column(Boolean, server_default=false(), nullable=False)
+    is_injury_risk_high: Mapped[bool] = mapped_column(Boolean, server_default=false(), nullable=False)
+    calculated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
