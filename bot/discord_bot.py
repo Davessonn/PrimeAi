@@ -34,7 +34,7 @@ bot = PrimeAiBot()
 
 @bot.tree.command(name="ping", description="Check whether the bot is online.")
 async def ping(interaction: discord.Interaction):
-    await interaction.response.send_message("PrimeAi online!", ephemeral=True)
+    await interaction.response.send_message("PrimeAI online!", ephemeral=True)
 
 
 @bot.tree.command(
