@@ -2,7 +2,7 @@
 
 ![Python](https://img.shields.io/badge/Python-3.11%2B-blue?logo=python)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-AsyncSQLAlchemy-336791?logo=postgresql)
-![Google Gemini](https://img.shields.io/badge/AI-Google%20Gemini%202.0-8E44AD?logo=google)
+![Google Gemini](https://img.shields.io/badge/AI-Google%20Gemini%203.8-8E44AD?logo=google)
 ![Discord](https://img.shields.io/badge/Interface-Discord%20Bot-5865F2?logo=discord)
 
 **PrimeAi** is an automated personal endurance sports and sleep analysis assistant. It aggregates physiological and training metrics from **Intervals.icu** (fed by Apple Watch/AutoSleep and Strava/Garmin), calculates advanced recovery analytics against your individual 30-day baseline (HRV Z-Scores, Sleep Debt, Ramp Rate), and delivers daily personalized AI briefings directly to your **Discord** server.
@@ -16,7 +16,7 @@
   - **HRV Z-Score:** Evaluates today's HRV against your individual 30-day baseline and standard deviation to detect systemic fatigue or illness.
   - **Sleep Debt:** Tracks cumulative sleep deficits (hours) against your optimal target.
   - **TSB & Ramp Rate:** Monitors form and load acceleration to prevent overtraining and injury.
-- **🧠 Personal AI Coach:** Powered by **Google Gemini 2.0 Flash** in structured JSON Mode. Combines objective physiological trends with subjective user notes to recommend workout zones, duration, and actionable lifestyle advice.
+- **🧠 Personal AI Coach:** Powered by **Google Gemini 3.8 Flash** in structured JSON mode. Combines physiological trends with wellness comments to recommend workout type, intensity, duration, and actionable recovery advice in Hungarian.
 - **💬 Rich Discord Embeds:** Automatically posts a visually intuitive briefing card every morning at 07:00 AM.
 - **📝 Interactive Slash Commands:** Use `/note` in Discord to report subjective context (e.g., *"Sore right calf"*, *"High stress day"*) that the AI accounts for in the next briefing.
 
@@ -49,7 +49,7 @@
              │ (Save)                                        │
              ▼                                               ▼
 ┌──────────────────────────┐                    ┌──────────────────────────┐
-│  4. POSTGRESQL DATABASE  │                    │ 5. GOOGLE GEMINI 2.0 AI  │
+│  4. POSTGRESQL DATABASE  │                    │ 5. GOOGLE GEMINI 3.8 AI  │
 │   (Historical Storage)   │ ◄──────────────────┤   (JSON Mode Analysis)   │
 └──────────────────────────┘                    └──────────────────────────┘
              ▲
@@ -66,7 +66,7 @@
 
 - **Backend:** Python 3.11+, AsyncIO, `httpx`, `Pydantic v2`
 - **Database:** PostgreSQL with `SQLAlchemy 2.0 (Async)` & `asyncpg`
-- **AI Engine:** Google Gemini 2.0 Flash REST API (JSON Schema mode)
+- **AI Engine:** Google Gemini 3.8 Flash via the async Google Gen AI SDK (JSON Schema mode)
 - **Interface:** `discord.py` (App Commands & Cogs)
 - **Scheduler:** `APScheduler`
 
@@ -127,6 +127,7 @@ INTERVALS_BASE_URL=https://intervals.icu/api/v1
 
 # Google Gemini
 GOOGLE_GEMINI_API_KEY=your_gemini_api_key_here
+GOOGLE_GEMINI_MODEL=gemini-3.8-flash
 
 # Runtime
 ENVIRONMENT=development
@@ -213,6 +214,39 @@ an explicit migration to add these columns.
 The database role needs schema USAGE and SELECT, INSERT, UPDATE on both target
 tables. If activities fail after wellness has committed, the wellness changes
 remain saved; re-running is safe because both syncs use upserts.
+
+### Gemini daily briefing
+
+The sync calculates the baseline for the requested end date only; it does not
+replay a hard-coded historical date range, which would fail on missing days.
+
+AI generation is opt-in and may incur API charges. After syncing, generate and
+save a briefing for the end date with:
+
+```powershell
+.\.venv\Scripts\python.exe main.py --briefing
+```
+
+`GOOGLE_GEMINI_MODEL` optionally overrides the default `gemini-3.8-flash`.
+If an older model returns HTTP 404, check this setting in `.env` and in the
+shell environment: either overrides the code default. Model availability and
+free-tier eligibility depend on Google's current offerings and your project;
+the model name alone does not guarantee free usage. No automatic fallback to
+another model is performed.
+The briefing uses the target day's stored wellness and baseline plus the last
+14 calendar dates of recorded activities, including the target day. Only mapped
+metrics and wellness comments are sent, not original `raw_json` API payloads.
+This sends health/training data to Google; enable it only if you accept that.
+Missing wellness or baseline data causes an explicit error.
+
+Responses are generated asynchronously with a 180-second request timeout, validated
+against the DTO, and upserted by date into `"primeAi".ai_briefings` in a separate
+transaction. Blocked, truncated, empty or invalid responses are not saved; earlier
+sync transactions remain committed if generation fails. The CLI prints the saved
+briefing as JSON; it does not post it to Discord or schedule it automatically.
+The prompt requests Hungarian explanations, consistent units, explicit uncertainty
+for missing data, and conservative, evidence-linked recommendations. Readiness is
+a coaching estimate, not a medical diagnosis or clearance.
 
 ---
 
